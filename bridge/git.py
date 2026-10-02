@@ -47,8 +47,10 @@ class Git:
         # Exact compare-and-swap, including creation. Callers only append to expected.
         if expected and not self.ancestor(expected, sha):
             raise BridgeError('Refusing non-append publication: ' + branch)
-        self.run('push', '--porcelain', '--force-with-lease=' + ref + ':' + (expected or ''),
-                 url, sha + ':' + ref)
+        p = self.run('push', '--porcelain', '--force-with-lease=' + ref + ':' + (expected or ''),
+                     url, sha + ':' + ref, check=False)
+        if p.returncode:
+            raise BridgeError((p.stderr + p.stdout).decode(errors='replace').strip())
 
     def blob(self, data):
         return self.run('hash-object', '-w', '--stdin', data=data).decode().strip()
