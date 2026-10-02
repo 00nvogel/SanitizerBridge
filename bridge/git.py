@@ -55,6 +55,16 @@ class Git:
     def blob(self, data):
         return self.run('hash-object', '-w', '--stdin', data=data).decode().strip()
 
+    def delete(self, url, branch, expected):
+        """Delete only the exact staging reference owned by a completed operation."""
+        actual = self.head(url, branch)
+        if actual is None:
+            return
+        if actual != expected:
+            raise BridgeError('Staging branch was changed; refusing to delete ' + branch)
+        ref = 'refs/heads/' + branch
+        self.run('push', '--force-with-lease=' + ref + ':' + expected, url, ':' + ref)
+
     def files(self, sha):
         if not sha:
             return {}

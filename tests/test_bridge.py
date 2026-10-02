@@ -75,9 +75,9 @@ class BridgeTests(unittest.TestCase):
         self.assertEqual(state['base'], latest)
         self.assertEqual(f.contents('customer'), {'shared.txt': ('100644', b'latest')})
         self.assertFalse(f.git.ancestor(f.anchor, state['checkpoint']))
-        before = f.git.head(f.repos['bridge'], 'bridge-state/demo')
+        before = f.git.head(f.repos['bridge'], 'bridge-state-v2/demo')
         f.run(); f.run('export'); f.run()
-        self.assertEqual(before, f.git.head(f.repos['bridge'], 'bridge-state/demo'))
+        self.assertEqual(before, f.git.head(f.repos['bridge'], 'bridge-state-v2/demo'))
 
     def test_populated_bootstrap_incremental_and_manual_branch(self):
         f = self.fixture(customer={'shared.txt': 'customer', 'new.txt': 'new', 'customer-private/keep': 'secret'},
@@ -183,7 +183,7 @@ class BridgeTests(unittest.TestCase):
                     if url == f.repos['bridge'] and published:
                         raise BridgeError('Injected state outage')
                     original(url, branch, sha, expected)
-                    if url == f.repos['internal' if action == 'import' else 'customer']:
+                    if url == f.repos['internal' if action == 'import' else 'customer'] and not branch.startswith('sanitizer-bridge-stage/'):
                         published.append(sha)
                 # For export first preserve changes, so the fault lands after customer publication.
                 if action == 'export':
@@ -253,15 +253,18 @@ class BridgeTests(unittest.TestCase):
         with self.assertRaises(BridgeError):
             stale.save(stale_state)
 
-    def test_force_push_rejected_and_excluded_collision(self):
+    def test_force_push_suspends_until_export_and_excluded_collision(self):
         f = self.fixture(customer={'shared.txt': 'customer'})
         f.run()
         state = f.state()
         rewritten = f.git.commit({}, [], 'Synthetic rewrite')
         f.git.run('push', '--force', f.repos['customer'], rewritten + ':refs/heads/main')
-        with self.assertRaisesRegex(BridgeError, 'rewritten'):
-            f.run()
-        self.assertEqual(f.state(), state)
+        self.assertEqual(f.run()['status'], 'imports-suspended')
+        self.assertEqual(f.state()['generated'], state['generated'])
+        self.assertIsNotNone(f.state()['suspension'])
+        f.run('export')
+        self.assertIsNone(f.state()['suspension'])
+        self.assertEqual(f.state()['base'], f.anchor)
         from bridge.filtering import overlay
         with self.assertRaisesRegex(BridgeError, 'collision'):
             overlay({'dir/private': ('100644', 'x')}, {}, {'dir': ('100644', 'y')})
@@ -281,7 +284,7 @@ class BridgeTests(unittest.TestCase):
         f = self.fixture(customer={'shared.txt': 'customer'})
         original = f.git.push
         def fail_destination(url, branch, sha, expected):
-            if url == f.repos['internal']:
+            if url == f.repos['internal'] and not branch.startswith('sanitizer-bridge-stage/'):
                 raise BridgeError('Injected destination outage')
             return original(url, branch, sha, expected)
         with patch.object(f.git, 'push', fail_destination), self.assertRaises(BridgeError):
@@ -331,10 +334,9 @@ class BridgeTests(unittest.TestCase):
                 f.git.run('push', '--force', f.repos['customer'], checkpoint + ':refs/heads/main')
             return original_capture(role)
         with patch.object(f.git, 'push', racing), patch.object(engine, 'capture', rewind):
-            with self.assertRaisesRegex(BridgeError, 'rewritten'):
-                engine.run('export')
-        self.assertIsNotNone(f.state()['raced_customer'])
-        self.assertEqual(f.state()['checkpoint'], checkpoint)
+            engine.run('export')
+        self.assertIsNone(f.state()['suspension'])
+        self.assertNotEqual(f.state()['checkpoint'], checkpoint)
 
     def test_submodule_rejected_without_advancing_state(self):
         f = self.fixture(customer={'shared.txt': 'internal'})

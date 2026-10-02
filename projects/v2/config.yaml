@@ -1,0 +1,16 @@
+bootstrap_internal_commit: 6dad2a12b368199411c6c2878cca93a705ca8599
+customer:
+  branch: v2-standalone-customer
+  repository: 00nvogel/BridgeTest2
+detection:
+  notification: true
+  polling: true
+enabled: true
+internal:
+  branch: main
+  repository: 00nvogel/BridgeTest1
+sanitizer: sanitizers/shared/sanitization.sh
+secrets:
+  bridge: BRIDGE_TEST_TOKEN
+  customer: BRIDGE_TEST_TOKEN
+  internal: BRIDGE_TEST_TOKEN

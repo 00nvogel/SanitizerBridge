@@ -7,7 +7,7 @@ on:
     inputs:
       operation:
         type: choice
-        options: [poll, notification, export]
+        options: [poll, notification, export, migrate]
         default: poll
         required: true
       project:
@@ -45,6 +45,7 @@ jobs:
           trigger="$OPERATION"
           action=import
           if [[ "$OPERATION" == export ]]; then trigger=manual; action=export; fi
+          if [[ "$OPERATION" == migrate ]]; then trigger=manual; action=migrate; fi
           options=()
           if [[ -n "$PROJECT" ]]; then options+=(--project "$PROJECT"); fi
           matrix=$(python -m bridge matrix --trigger "$trigger" "${options[@]}")
