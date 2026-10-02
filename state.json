@@ -1,0 +1,22 @@
+{
+  "base": "5da77a1a67427156fe44ac0d58acc97d2a5451f9",
+  "binding": {
+    "bootstrap_internal_commit": "5da77a1a67427156fe44ac0d58acc97d2a5451f9",
+    "customer": {
+      "branch": "scenario-populated",
+      "repository": "00nvogel/BridgeTest2"
+    },
+    "internal": {
+      "branch": "scenario-populated",
+      "repository": "00nvogel/BridgeTest1"
+    }
+  },
+  "branch": null,
+  "checkpoint": "a87a8babc737327965cb254251966ec187d5c51f",
+  "generated": null,
+  "mode": "ready",
+  "observed": "a87a8babc737327965cb254251966ec187d5c51f",
+  "pending": null,
+  "schema": 1,
+  "sequence": 0
+}
