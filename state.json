@@ -17,7 +17,39 @@
   "generated": null,
   "mode": "awaiting_export",
   "observed": null,
-  "pending": null,
+  "pending": {
+    "branch": "v2-standalone-customer",
+    "commit": "11cd14585d5438bd74b7b2aec0a10f8c3fa687f7",
+    "expected": null,
+    "id": "05eb4c6401994a87a9f0a3b657cf5553",
+    "next": {
+      "base": "57e903c556145972e6859e22ddfdcd362a397395",
+      "binding": {
+        "bootstrap_internal_commit": "6dad2a12b368199411c6c2878cca93a705ca8599",
+        "customer": {
+          "branch": "v2-standalone-customer",
+          "repository": "00nvogel/BridgeTest2"
+        },
+        "internal": {
+          "branch": "main",
+          "repository": "00nvogel/BridgeTest1"
+        }
+      },
+      "branch": null,
+      "checkpoint": "11cd14585d5438bd74b7b2aec0a10f8c3fa687f7",
+      "cleanup": [],
+      "generated": null,
+      "mode": "ready",
+      "observed": "11cd14585d5438bd74b7b2aec0a10f8c3fa687f7",
+      "pending": null,
+      "schema": 2,
+      "sequence": 0,
+      "suspension": null
+    },
+    "role": "customer",
+    "source": "57e903c556145972e6859e22ddfdcd362a397395",
+    "stage": "sanitizer-bridge-stage/v2/05eb4c6401994a87a9f0a3b657cf5553"
+  },
   "schema": 2,
   "sequence": 0,
   "suspension": null
