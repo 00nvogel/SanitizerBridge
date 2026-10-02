@@ -11,40 +11,12 @@
       "repository": "00nvogel/BridgeTest1"
     }
   },
-  "branch": null,
+  "branch": "bridge/populated/import-1",
   "checkpoint": "a87a8babc737327965cb254251966ec187d5c51f",
-  "generated": null,
+  "generated": "360ca61e66e84edd16888983cda81bcda37690aa",
   "mode": "ready",
   "observed": "a87a8babc737327965cb254251966ec187d5c51f",
-  "pending": {
-    "branch": "bridge/populated/import-1",
-    "commit": "360ca61e66e84edd16888983cda81bcda37690aa",
-    "expected": null,
-    "next": {
-      "base": "5da77a1a67427156fe44ac0d58acc97d2a5451f9",
-      "binding": {
-        "bootstrap_internal_commit": "5da77a1a67427156fe44ac0d58acc97d2a5451f9",
-        "customer": {
-          "branch": "scenario-populated",
-          "repository": "00nvogel/BridgeTest2"
-        },
-        "internal": {
-          "branch": "scenario-populated",
-          "repository": "00nvogel/BridgeTest1"
-        }
-      },
-      "branch": "bridge/populated/import-1",
-      "checkpoint": "a87a8babc737327965cb254251966ec187d5c51f",
-      "generated": "360ca61e66e84edd16888983cda81bcda37690aa",
-      "mode": "ready",
-      "observed": "a87a8babc737327965cb254251966ec187d5c51f",
-      "pending": null,
-      "schema": 1,
-      "sequence": 1
-    },
-    "role": "internal",
-    "source": "a87a8babc737327965cb254251966ec187d5c51f"
-  },
+  "pending": null,
   "schema": 1,
-  "sequence": 0
+  "sequence": 1
 }
