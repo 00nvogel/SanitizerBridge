@@ -13,13 +13,7 @@
   },
   "branch": "bridge/v2/import-1",
   "checkpoint": "11cd14585d5438bd74b7b2aec0a10f8c3fa687f7",
-  "cleanup": [
-    {
-      "commit": "5fd50102eb935d3f6c568dacd63cf4101b05b66e",
-      "role": "internal",
-      "stage": "sanitizer-bridge-stage/v2/cfd8c3441098466a973b3fb23105c93e"
-    }
-  ],
+  "cleanup": [],
   "generated": "5fd50102eb935d3f6c568dacd63cf4101b05b66e",
   "mode": "ready",
   "observed": "dc33f4feafe57bbccb97ae10b10481a4a88972c5",
