@@ -66,8 +66,10 @@ operations are recovered before processing new observations.
 That recovery export preserves the customer's current included snapshot on a usable
 internal branch before replacing it. It does not need the missing customer history, but
 it does need the internal base/generated commit. Customer revisions already lost cannot
-be reconstructed. A failed export leaves imports suspended. A successful no-content
-export also establishes the new checkpoint and resumes imports.
+be reconstructed. Failed publication or checkpoint recording does not clear suspension.
+If checkpoint recording succeeds but staging cleanup fails, export is already complete;
+the reported error asks for cleanup retry. A successful no-content export also establishes
+the new checkpoint and resumes imports.
 
 To deliberately reinitialize instead of restoring missing internal history, stop the
 project's jobs, ensure there is no unfinished publication, retain any needed branches,
