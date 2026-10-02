@@ -3,7 +3,7 @@ customer:
   branch: main
   repository: 00nvogel/BridgeTest2
 detection:
-  notification: true
+  notification: false
   polling: true
 enabled: true
 internal:
