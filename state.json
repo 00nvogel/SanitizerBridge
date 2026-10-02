@@ -16,7 +16,35 @@
   "generated": "e0cd91958d0e5739786fdeca774aaf8f3d0a6f56",
   "mode": "ready",
   "observed": "70fc29948ac573935a8e33fec5e1486ca6f8b5f9",
-  "pending": null,
+  "pending": {
+    "branch": "main",
+    "commit": "8c5f5bde69cf4266964ae8ff48334d46e1cee7a0",
+    "expected": "70fc29948ac573935a8e33fec5e1486ca6f8b5f9",
+    "next": {
+      "base": "6dad2a12b368199411c6c2878cca93a705ca8599",
+      "binding": {
+        "bootstrap_internal_commit": "75bc30843e25fe11c8f816d05b2b0c9ff9297fbe",
+        "customer": {
+          "branch": "main",
+          "repository": "00nvogel/BridgeTest2"
+        },
+        "internal": {
+          "branch": "main",
+          "repository": "00nvogel/BridgeTest1"
+        }
+      },
+      "branch": null,
+      "checkpoint": "8c5f5bde69cf4266964ae8ff48334d46e1cee7a0",
+      "generated": null,
+      "mode": "ready",
+      "observed": "8c5f5bde69cf4266964ae8ff48334d46e1cee7a0",
+      "pending": null,
+      "schema": 1,
+      "sequence": 3
+    },
+    "role": "customer",
+    "source": "6dad2a12b368199411c6c2878cca93a705ca8599"
+  },
   "schema": 1,
   "sequence": 3
 }
