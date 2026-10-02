@@ -119,9 +119,10 @@ temporarily show `pending` after a failure. Rerun the operation with the same co
 
 Customer append races are fetched, preserved and retried up to five times. A run
 that loses the bridge state comparison fails safely; rerun it. Independently launched
-CLI processes use the same compare-and-swap rules, but can require retries. GitHub
-may replace an older queued concurrency job with a newer one; polling converges on
-the latest state. Verify that an explicit export actually completed.
+CLI processes use the same compare-and-swap rules, but can require retries. The
+workflow uses `queue: max` to retain up to 100 pending jobs per project instead of
+replacing an export with a newer notification. A full queue rejects additional
+jobs; verify the export run's outcome. See [GitHub's concurrency documentation](https://docs.github.com/en/actions/how-tos/write-workflows/choose-when-workflows-run/control-workflow-concurrency).
 
 Customer history rewrites/deletion and an internal head no longer descending from
 the epoch base fail clearly. Restore the source history or register a new project
@@ -160,3 +161,7 @@ excluded files, old-import integration, project isolation, binary/mode/symlink a
 filename semantics, compare-and-swap races, history rewrites, sanitizer failures,
 and recovery after destination publication. Live deployment fixtures and run
 evidence belong outside this reusable folder.
+
+`Verify bridge` runs the same integration suite on implementation pushes to main
+and can also be dispatched manually. It needs no repository credentials beyond
+the read-only checkout token.

@@ -1,0 +1,25 @@
+name: Verify bridge
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'bridge/**'
+      - 'tests/**'
+      - 'requirements.txt'
+      - '.github/workflows/verify.yml'
+permissions:
+  contents: read
+jobs:
+  integration:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install -r requirements.txt
+      - run: python -m unittest discover -s tests -v

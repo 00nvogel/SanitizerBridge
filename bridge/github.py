@@ -1,7 +1,6 @@
 """GitHub-specific authentication and dispatch, separate from synchronization."""
 import base64
 import json
-import os
 import urllib.error
 import urllib.request
 from .git import BridgeError

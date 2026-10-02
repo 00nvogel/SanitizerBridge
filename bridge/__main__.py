@@ -4,6 +4,7 @@ import os
 from pathlib import Path
 import sys
 import tempfile
+import yaml
 from .config import load
 from .engine import Engine
 from .git import Git, BridgeError
@@ -42,7 +43,7 @@ def main():
         with tempfile.TemporaryDirectory(prefix='bridge-git-') as directory:
             engine = Engine(Git(directory, env), config, args.bridge_url)
             print(json.dumps(engine.run(args.action), sort_keys=True))
-    except (BridgeError, KeyError, ValueError, OSError) as error:
+    except (BridgeError, KeyError, ValueError, OSError, yaml.YAMLError) as error:
         print('Bridge failed: ' + str(error), file=sys.stderr)
         sys.exit(1)
 

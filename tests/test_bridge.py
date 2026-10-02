@@ -1,11 +1,9 @@
 import copy
-import json
 from pathlib import Path
 import tempfile
 import unittest
 from unittest.mock import patch
 
-from bridge.config import load
 from bridge.engine import Engine
 from bridge.git import BridgeError, Git
 
@@ -267,6 +265,112 @@ class BridgeTests(unittest.TestCase):
         from bridge.filtering import overlay
         with self.assertRaisesRegex(BridgeError, 'collision'):
             overlay({'dir/private': ('100644', 'x')}, {}, {'dir': ('100644', 'y')})
+
+    def test_both_projections_empty_and_unsupported_lfs(self):
+        f = self.fixture(internal={'private/key': 'only excluded'}, customer={'customer-private/key': 'only excluded'})
+        f.run()
+        self.assertEqual(f.state()['mode'], 'ready')
+        self.assertIsNone(f.state()['generated'])
+        f.commit('customer', {'large': 'version https://git-lfs.github.com/spec/v1\noid sha256:123\nsize 12\n'})
+        before = f.state()
+        with self.assertRaisesRegex(BridgeError, 'LFS'):
+            f.run()
+        self.assertEqual(f.state(), before)
+
+    def test_recovery_from_fresh_object_database(self):
+        f = self.fixture(customer={'shared.txt': 'customer'})
+        original = f.git.push
+        def fail_destination(url, branch, sha, expected):
+            if url == f.repos['internal']:
+                raise BridgeError('Injected destination outage')
+            return original(url, branch, sha, expected)
+        with patch.object(f.git, 'push', fail_destination), self.assertRaises(BridgeError):
+            f.run()
+        pending = f.state()['pending']
+        self.assertIsNotNone(pending)
+        with tempfile.TemporaryDirectory() as d:
+            recovered = Engine(Git(d), f.config, f.repos['bridge'])
+            recovered.run('import')
+            self.assertEqual(recovered.state['generated'], pending['commit'])
+            self.assertIsNone(recovered.state['pending'])
+
+    def test_export_source_is_captured_once(self):
+        f = self.fixture()
+        f.run('export')
+        expected = f.commit('internal', {'shared.txt': 'captured'})
+        engine = f.engine()
+        original = engine.capture
+        advanced = []
+        def capture(role):
+            sha = original(role)
+            if role == 'internal' and not advanced:
+                advanced.append(f.commit('internal', {'shared.txt': 'next export'}))
+            return sha
+        with patch.object(engine, 'capture', capture):
+            result = engine.run('export')
+        self.assertEqual(result['internal'], expected)
+        self.assertEqual(f.contents('customer')['shared.txt'][1], b'captured')
+        f.run('export')
+        self.assertEqual(f.contents('customer')['shared.txt'][1], b'next export')
+
+    def test_observed_racing_customer_revision_cannot_be_silently_rewound(self):
+        f = self.fixture()
+        f.run('export')
+        checkpoint = f.state()['checkpoint']
+        f.commit('internal', {'shared.txt': 'new internal'})
+        engine = f.engine()
+        original_push, original_capture = f.git.push, engine.capture
+        raced = []
+        def racing(url, branch, sha, expected):
+            if url == f.repos['customer'] and not raced:
+                raced.append(True)
+                f.commit('customer', {'raced': 'must remain observable'})
+            return original_push(url, branch, sha, expected)
+        def rewind(role):
+            if role == 'customer' and engine.state.get('raced_customer'):
+                f.git.run('push', '--force', f.repos['customer'], checkpoint + ':refs/heads/main')
+            return original_capture(role)
+        with patch.object(f.git, 'push', racing), patch.object(engine, 'capture', rewind):
+            with self.assertRaisesRegex(BridgeError, 'rewritten'):
+                engine.run('export')
+        self.assertIsNotNone(f.state()['raced_customer'])
+        self.assertEqual(f.state()['checkpoint'], checkpoint)
+
+    def test_submodule_rejected_without_advancing_state(self):
+        f = self.fixture(customer={'shared.txt': 'internal'})
+        f.run()
+        before = f.state()
+        parent = f.git.head(f.repos['customer'], 'main')
+        files = f.git.files(parent)
+        files['module'] = ('160000', f.anchor)
+        commit = f.git.commit(files, [parent], 'Synthetic gitlink')
+        f.git.push(f.repos['customer'], 'main', commit, parent)
+        with self.assertRaisesRegex(BridgeError, 'submodule'):
+            f.run()
+        self.assertEqual(f.state(), before)
+
+    def test_project_configuration_and_binding_validation(self):
+        from bridge.config import load
+        import yaml
+        f = self.fixture(customer={'shared.txt': 'internal'})
+        root = Path(self.tmp.name)
+        directory = root / 'projects' / 'demo'
+        directory.mkdir(parents=True)
+        cfg = {key: value for key, value in f.config.items() if key not in ('script', 'project')}
+        cfg.update(sanitizer='sanitization.sh', detection={'polling': True, 'notification': False},
+                   secrets={role: 'TEST_TOKEN' for role in ('bridge', 'internal', 'customer')})
+        path = directory / 'config.yaml'
+        path.write_text(yaml.safe_dump(cfg))
+        self.assertEqual(load(root, 'demo', local=True)['script'], f.script)
+        cfg['enabled'] = 'false'
+        path.write_text(yaml.safe_dump(cfg))
+        with self.assertRaisesRegex(BridgeError, 'enabled'):
+            load(root, 'demo', local=True)
+        f.run()
+        changed = copy.deepcopy(f.config)
+        changed['customer']['branch'] = 'other-branch'
+        with self.assertRaisesRegex(BridgeError, 'different configuration'):
+            Engine(f.git, changed, f.repos['bridge'])
 
 
 if __name__ == '__main__':

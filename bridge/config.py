@@ -1,4 +1,3 @@
-import os
 from pathlib import Path
 import re
 import subprocess
@@ -13,13 +12,19 @@ def load(root, project, local=False):
     config = yaml.safe_load((root / 'projects' / project / 'config.yaml').read_text())
     if not isinstance(config, dict):
         raise BridgeError('Project config must be a mapping')
+    if type(config.get('enabled', True)) is not bool:
+        raise BridgeError('enabled must be true or false')
     for role in ('internal', 'customer'):
         entry = config[role]
+        if not isinstance(entry, dict):
+            raise BridgeError(role + ' must be a mapping')
         branch = entry['branch']
-        if subprocess.run(['git', 'check-ref-format', 'refs/heads/' + branch],
+        if not isinstance(branch, str) or subprocess.run(['git', 'check-ref-format', 'refs/heads/' + branch],
                           capture_output=True).returncode:
-            raise BridgeError('Invalid branch: ' + branch)
+            raise BridgeError('Invalid branch: ' + repr(branch))
         repo = entry['repository']
+        if not isinstance(repo, str):
+            raise BridgeError('Expected repository string')
         if local and Path(repo).is_absolute():
             entry['url'] = repo
         elif re.fullmatch(r'[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+', repo):
@@ -29,12 +34,17 @@ def load(root, project, local=False):
     anchor = config['bootstrap_internal_commit']
     if not isinstance(anchor, str) or not re.fullmatch(r'[0-9a-f]{40}', anchor):
         raise BridgeError('bootstrap_internal_commit must be an exact 40-character SHA')
+    if not isinstance(config['sanitizer'], str):
+        raise BridgeError('sanitizer must be a path string')
     script = (root / config['sanitizer']).resolve()
     if not script.is_relative_to(root) or not script.is_file():
         raise BridgeError('Sanitizer must be a file inside the trusted bridge checkout')
     config['script'] = script
+    detection = config.get('detection')
+    if not isinstance(detection, dict) or not isinstance(config.get('secrets'), dict):
+        raise BridgeError('detection and secrets must be mappings')
     for name in ('polling', 'notification'):
-        if type(config.get('detection', {}).get(name)) is not bool:
+        if type(detection.get(name)) is not bool:
             raise BridgeError('detection.' + name + ' must be true or false')
     for role in ('bridge', 'internal', 'customer'):
         secret = config['secrets'][role]

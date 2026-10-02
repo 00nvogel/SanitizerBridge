@@ -63,6 +63,7 @@ jobs:
       matrix: ${{ fromJSON(needs.select.outputs.matrix) }}
     concurrency:
       group: sanitizer-bridge-${{ matrix.project }}
+      queue: max
       cancel-in-progress: false
     runs-on: ubuntu-latest
     timeout-minutes: 20

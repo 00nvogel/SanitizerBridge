@@ -26,7 +26,7 @@ class Engine:
         def collect(value):
             if isinstance(value, dict):
                 for key, item in value.items():
-                    if key in ('base', 'checkpoint', 'observed', 'generated', 'commit', 'expected', 'source') and item:
+                    if key in ('base', 'checkpoint', 'observed', 'raced_customer', 'generated', 'commit', 'expected', 'source') and item:
                         refs.append(item)
                     elif isinstance(item, (dict, list)):
                         collect(item)
@@ -59,7 +59,7 @@ class Engine:
                    'sequence': 0, 'mode': mode, 'pending': None}, [customer, base])
 
     def check_customer(self, customer):
-        if not self.git.ancestor(self.state['observed'], customer):
+        if not self.git.ancestor(self.state.get('raced_customer') or self.state['observed'], customer):
             raise BridgeError('Customer history was deleted or rewritten; preserved state retained. Restore history or register a new project.')
 
     def available_branch(self, start):
@@ -89,6 +89,7 @@ class Engine:
                         raise BridgeError('Customer history rewritten during export; pending transaction retained')
                     state = copy.deepcopy(self.state)
                     state['pending'] = None
+                    state['raced_customer'] = actual
                     self.save(state, [actual])
                     return
                 branch, sequence = self.available_branch(pending['next']['sequence'] + 1)
@@ -101,10 +102,10 @@ class Engine:
                 continue
             try:
                 self.git.push(url, pending['branch'], pending['commit'], pending['expected'])
-            except BridgeError:
+            except BridgeError as error:
                 if self.git.head(url, pending['branch']) != actual:
                     continue
-                raise BridgeError('Destination publication failed; pending transaction retained. Check Contents/Workflows write access and branch protection.')
+                raise BridgeError('Destination publication failed; pending transaction retained. Check Contents/Workflows write access and branch protection. ' + str(error)) from error
             self.save(pending['next'])
             return
         raise BridgeError('Publication raced repeatedly; retry the operation')
@@ -122,12 +123,14 @@ class Engine:
         if self.state['mode'] == 'awaiting_export' and not source:
             state = copy.deepcopy(self.state)
             state['observed'] = customer
+            state.pop('raced_customer', None)
             self.save(state)
             return
         parent = self.state['generated'] or self.state['base']
         before = self.git.files(parent)
         desired = overlay(before, self.filtered(before), source)
         state = copy.deepcopy(self.state)
+        state.pop('raced_customer', None)
         state.update(observed=customer, mode='ready')
         if desired == before:
             if state['generated'] and self.git.head(self.config['internal']['url'], state['branch']) != state['generated']:
