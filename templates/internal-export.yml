@@ -1,0 +1,18 @@
+# Install as .github/workflows/bridge-export.yml in the INTERNAL repository.
+name: Export shared files
+on:
+  workflow_dispatch:
+permissions: {}
+jobs:
+  export:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Request export of latest configured internal branch
+        env:
+          GH_TOKEN: ${{ secrets.BRIDGE_DISPATCH_TOKEN }}
+          BRIDGE_REPOSITORY: your-organization/your-bridge
+          BRIDGE_REF: main
+          BRIDGE_PROJECT: example
+        run: |
+          gh api --method POST "repos/$BRIDGE_REPOSITORY/actions/workflows/bridge.yml/dispatches" \
+            -f ref="$BRIDGE_REF" -f 'inputs[operation]=export' -f "inputs[project]=$BRIDGE_PROJECT"

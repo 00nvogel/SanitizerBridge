@@ -1,0 +1,19 @@
+# Install as .github/workflows/bridge-notify.yml in the CUSTOMER repository.
+name: Notify bridge
+on:
+  push:
+    branches: [main] # Match the configured customer branch.
+permissions: {}
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Request authoritative customer fetch
+        env:
+          GH_TOKEN: ${{ secrets.BRIDGE_DISPATCH_TOKEN }}
+          BRIDGE_REPOSITORY: your-organization/your-bridge
+          BRIDGE_REF: main
+          BRIDGE_PROJECT: example
+        run: |
+          gh api --method POST "repos/$BRIDGE_REPOSITORY/actions/workflows/bridge.yml/dispatches" \
+            -f ref="$BRIDGE_REF" -f 'inputs[operation]=notification' -f "inputs[project]=$BRIDGE_PROJECT"

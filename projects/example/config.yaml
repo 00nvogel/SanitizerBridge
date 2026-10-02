@@ -1,0 +1,16 @@
+enabled: false # Copy this directory, fill in values, then enable.
+internal:
+  repository: your-organization/internal-project
+  branch: main
+customer:
+  repository: your-organization/customer-project
+  branch: main
+bootstrap_internal_commit: '0000000000000000000000000000000000000000'
+sanitizer: sanitizers/shared/sanitization.sh
+secrets:
+  bridge: BRIDGE_ACCESS_TOKEN
+  internal: INTERNAL_ACCESS_TOKEN
+  customer: CUSTOMER_ACCESS_TOKEN
+detection:
+  polling: true
+  notification: true
